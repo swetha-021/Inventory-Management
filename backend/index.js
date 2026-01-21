@@ -1,0 +1,106 @@
+// const express = require("express");
+// const cors = require("cors");
+
+
+// const app = express();
+
+// app.use(cors());
+// app.use(express.json());
+
+// app.get("/", (req, res) => {
+//   res.send("Backend is running");
+// });
+
+// app.post("/login", (req, res) => {
+//   const { email, password } = req.body;
+
+//   console.log("Email:", email);
+//   console.log("Password:", password);
+
+//   res.json({
+//     message: "Login successful (dummy)",
+//   });
+// });
+
+// const PORT = 5000;
+// app.listen(PORT, () => {
+//   console.log(`Server running on port ${PORT}`);
+// });
+
+
+///////////////////////////////////////////////////////////
+
+
+const cors = require("cors");
+const express = require("express");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+
+
+
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+const PORT = 5000;
+const JWT_SECRET = "jwt_secret_key"
+
+const user = {
+    id:1,
+    email:"sprakash@gmail.com",
+    password:bcrypt.hashSync("swetha",10)
+}
+
+app.get("/",(req,res)=>{
+    res.send("backend is running");  
+});
+
+app.post("/login",async(req,res)=>{
+    const {email,password} = req.body;
+    if(email != user.email){
+        return res.status(401).json({"message":"invalid username"})
+    }
+
+    const isMatch =await bcrypt.compare(password,user.password);
+    
+    if(!isMatch){
+        return res.status(401).json({"message":"invalid password"});
+    }
+
+    const token = jwt.sign(
+        {id:user.id,email:user.email},
+        JWT_SECRET,
+        {expiresIn:"1h"},
+    )
+
+    res.json({
+        "msg":"logged in successfully",
+        "token":token,
+    })
+
+
+});
+
+app.get("/protected", async(req,res)=>{
+    
+    const authHeader = req.headers.authorization;
+
+    if(!authHeader){
+        return res.status(401).json({"message":"invalid token"})
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    try{
+        const decode = jwt.verify(token,JWT_SECRET);
+        res.json({msg:"authorised login",user: decode})
+    }catch(error){
+        return res.status(401).json({"message":"invalid token"})
+    }
+
+})
+
+app.listen(PORT,()=>{
+    console.log(`server running on port ${PORT}`);
+})
