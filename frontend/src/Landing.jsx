@@ -12,40 +12,59 @@
 //   )
 // }
 // export default Landing
+////////////////////////////////////////////////////////////////////////////////
 
+import React from 'react'
+import {useState,useEffect} from "react"
+import axios from 'axios'
+import { useNavigate } from 'react-router-dom'
+import Login from './Login'
 
-import { useEffect, useState } from "react";
-import axios from "axios";
 
 const Landing = () => {
-  const [status, setStatus] = useState("Checking...");
-  const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    const checkAuth = async () => {
+  const navigate = useNavigate();
+
+  const [status,setStatus] = useState("checking..")
+  const [user,setUser] = useState(null)
+
+  useEffect(()=>{
+    const checkAuth = async() =>{
       const token = localStorage.getItem("token");
-
-      if (!token) {
-        setStatus("No token found. Not logged in ❌");
+      console.log("TOKEN BEING SENT:", token);
+      if(!token){
+        navigate("/");
         return;
       }
 
-      try {
-        const response = await axios.get("http://localhost:5000/protected", {
-          headers: {
-            Authorization: `Bearer ${token}`,
+      try{
+        const response = await axios.get("http://localhost:5000/protected",{
+          headers:{
+            Authorization:`Bearer ${token}`
           },
-        });
+
+        })
 
         setStatus(response.data.msg);
         setUser(response.data.user);
-      } catch (error) {
-        setStatus("Token invalid / expired ❌");
+
+      }catch(error){
+        navigate("/")
+        return;
       }
-    };
+    }
 
     checkAuth();
-  }, []);
+
+  },[])
+
+
+
+  const handleSubmit = ()=>{
+    localStorage.removeItem("token");
+    navigate("/");
+  }
+
 
   return (
     <div>
@@ -60,8 +79,11 @@ const Landing = () => {
           <p>Email: {user.email}</p>
         </div>
       )}
-    </div>
-  );
-};
 
-export default Landing;
+      <button onClick={handleSubmit}>Logout</button>
+    </div>
+
+  )
+}
+
+export default Landing

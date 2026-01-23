@@ -8,9 +8,11 @@ const Login = () => {
 
     const [email,setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [error, setError] = useState("");
 
     const handleSubmit = async(e) =>{
         e.preventDefault();
+        setError("");
 
         try{
             const response = await axios.post(
@@ -27,6 +29,8 @@ const Login = () => {
             
         }catch(error){
             console.error("Login error:", error);
+            const msg = error.response?.data?.message || "Login failed. Try again.";
+            setError(msg);
         }
     }
 
@@ -53,6 +57,9 @@ const Login = () => {
             onChange={(e)=>setPassword(e.target.value)}
         />
         <br />
+
+        {error && <p style={{ color: "red" }}>{error}</p>}
+
 
         <button type='submit' >Submit</button>
     </form>

@@ -36,6 +36,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
 
+const pool = require("./db");
 
 
 const app = express();
@@ -49,8 +50,23 @@ const JWT_SECRET = "jwt_secret_key"
 const user = {
     id:1,
     email:"sprakash@gmail.com",
-    password:bcrypt.hashSync("swetha",10)
+    password:bcrypt.hashSync("Swetha",10)
 }
+
+//test db + backend connection
+
+app.get("/db-test",async(req,res)=>{
+    try{
+        const result = await pool.query("SELECT NOW()");
+        res.json({"time":result.rows[0]});
+    }catch(err){
+        console.log(err);
+        res.status(401).json({msg:"error connecting database"});
+    }
+    
+})
+
+
 
 app.get("/",(req,res)=>{
     res.send("backend is running");  
@@ -84,6 +100,7 @@ app.post("/login",async(req,res)=>{
 
 app.get("/protected", async(req,res)=>{
     
+    console.log("✅ /protected route HIT");
     const authHeader = req.headers.authorization;
 
     if(!authHeader){
@@ -91,6 +108,7 @@ app.get("/protected", async(req,res)=>{
     }
 
     const token = authHeader.split(" ")[1];
+    console.log("TOKEN RECEIVED:", token);
 
     try{
         const decode = jwt.verify(token,JWT_SECRET);
