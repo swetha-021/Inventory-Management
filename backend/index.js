@@ -47,11 +47,11 @@ app.use(express.json());
 const PORT = 5000;
 const JWT_SECRET = "jwt_secret_key"
 
-const user = {
-    id:1,
-    email:"sprakash@gmail.com",
-    password:bcrypt.hashSync("Swetha",10)
-}
+// const user = {
+//     id:1,
+//     email:"sprakash@gmail.com",
+//     password:bcrypt.hashSync("Swetha",10)
+// }
 
 //test db + backend connection
 
@@ -68,32 +68,50 @@ app.get("/db-test",async(req,res)=>{
 
 
 
+
 app.get("/",(req,res)=>{
     res.send("backend is running");  
 });
 
 app.post("/login",async(req,res)=>{
     const {email,password} = req.body;
-    if(email != user.email){
-        return res.status(401).json({"message":"invalid username"})
+    // if(email != user.email){
+    //     return res.status(401).json({"message":"invalid username"})
+    // }
+
+
+    try{
+        const result = await pool.query(
+            "SELECT * FROM users WHERE email = $1",
+            [email]
+        );
+        if(result.rows.length===0){
+            return res.status(401).json({ message: "invalid username" });
+        }
+   
+        const user = result.rows[0];
+
+        const isMatch =await bcrypt.compare(password,user.password_hash);
+        
+        if(!isMatch){
+            return res.status(401).json({"message":"invalid password"});
+        }
+
+        const token = jwt.sign(
+            {id:user.id,email:user.email},
+            JWT_SECRET,
+            {expiresIn:"1h"},
+        )
+
+        res.json({
+            "msg":"logged in successfully",
+            "token":token,
+        })
+
+    }catch (err) {
+        console.error(err);
+        res.status(500).json({ message: "server error" });
     }
-
-    const isMatch =await bcrypt.compare(password,user.password);
-    
-    if(!isMatch){
-        return res.status(401).json({"message":"invalid password"});
-    }
-
-    const token = jwt.sign(
-        {id:user.id,email:user.email},
-        JWT_SECRET,
-        {expiresIn:"1h"},
-    )
-
-    res.json({
-        "msg":"logged in successfully",
-        "token":token,
-    })
 
 
 });
