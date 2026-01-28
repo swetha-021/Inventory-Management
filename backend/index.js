@@ -66,6 +66,68 @@ app.get("/db-test",async(req,res)=>{
     
 })
 
+//middleware to verify identity
+
+const authenticateToken = (req,res,next) =>{
+    const authHeader =  req.headers.authorization;
+    if(!authHeader){
+        return res.status(401).json({msg:"token not found"});
+    }
+    const token = authHeader.split(" ")[1];
+    try{
+        const decode = jwt.verify(token,JWT_SECRET);
+        req.user = decode;
+        next();
+    }catch(err){
+        return res.status(401).json({msg:"invalid token"});
+    }
+}
+
+app.post("/inventory",authenticateToken,async (req,res)=>{
+    const {name,quantity} = req.body;
+    const userId = req.user.id;
+
+    if (!name || quantity === undefined) {
+        return res.status(400).json({ message: "Name and quantity required" });
+    }
+    try{
+        const result = await pool.query(
+            `INSERT INTO inventory_items (user_id,name,quantity)
+            values ($1, $2, $3)
+            RETURNING id, name, quantity`,
+            [userId,name,quantity]
+        )
+
+        res.status(201).json({message: "Item added",item: result.rows[0],});
+    }catch(err){
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
+    }
+})
+
+app.get("/inventory",authenticateToken, async(req,res)=>{
+    const id = req.user.id;
+        try{
+            const result = await pool.query(
+                `SELECT  id, name, quantity, created_at
+                 from inventory_items WHERE user_id = $1
+                 ORDER BY created_at DESC`,
+                [id]
+            );
+            res.status(200).json({msg:"items listed", item:result.rows})
+        
+    }catch(err){
+        console.error(err);
+        res.status(500).json({ message: "Server error" });
+    }
+})
+
+
+
+
+
+
+
 
 
 
@@ -134,6 +196,42 @@ app.get("/protected", async(req,res)=>{
     }catch(error){
         return res.status(401).json({"message":"invalid token"})
     }
+
+})
+
+app.post("/signup",async(req,res)=>{
+    const{email,password} = req.body;
+
+    try{
+        const EmailExist = await pool.query(
+            "SELECT id from users WHERE email = $1",
+            [email],
+        );
+
+        if(EmailExist.rows.length>0){
+            return res.status(409).json({"msg":"Email already exists -> log in"});
+        }
+
+        const password_hash = bcrypt.hashSync(password,10);
+        
+        const result = await pool.query(
+            "INSERT INTO users (email, password_hash) VALUES ($1, $2) returning id, email",
+            [email, password_hash]
+        )
+
+        res.status(201).json({
+            "msg":"signup successfull",
+            user: result.rows[0],
+        })
+
+
+    }catch(err){
+        res.status(500).json({"msg":"server error"})
+    }
+    
+
+
+
 
 })
 
