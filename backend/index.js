@@ -114,7 +114,7 @@ app.get("/inventory",authenticateToken, async(req,res)=>{
                  ORDER BY created_at DESC`,
                 [id]
             );
-            res.status(200).json({msg:"items listed", item:result.rows})
+            res.status(200).json({msg:"items listed", items:result.rows})
         
     }catch(err){
         console.error(err);
