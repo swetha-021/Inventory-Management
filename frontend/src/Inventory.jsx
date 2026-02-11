@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 const Inventory = () => {
   const [items, setItems] = useState([]);
@@ -121,6 +122,14 @@ const Inventory = () => {
     }
   };
 
+  //---------------Logout---------------
+
+  const navigate = useNavigate();
+  const logout = ()=>{
+    localStorage.removeItem("token");
+    navigate("/");
+  }
+
   // ---------------- UI ----------------
   return (
     <>
@@ -178,6 +187,7 @@ const Inventory = () => {
           </li>
         ))}
       </ul>
+      <button onClick={logout}>Logout</button>
     </>
   );
 };
