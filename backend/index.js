@@ -122,11 +122,64 @@ app.get("/inventory",authenticateToken, async(req,res)=>{
     }
 })
 
+app.delete("/inventory/:id", authenticateToken, async(req,res)=>{
+    
+    const userId = req.user.id;
+    const itemId = req.params.id;
 
 
+    try{
+        const result = await pool.query(
+            "DELETE FROM inventory_items WHERE id = $1 and user_id = $2 returning id ",
+            [itemId, userId]
+        );
+
+        if (result.rows === 0){
+            return res.status(404).json({msg:"item couldnt be found"});
+        } 
+
+        return res.json({msg:"item deleted successfully"});
+
+    }catch(error){
+        return res.status(500).json({msg:"Could not be deleted"})
+    }
+})
 
 
+app.put("/inventory/:id", authenticateToken, async (req, res) => {
+  const userId = req.user.id;       // WHO
+  const itemId = req.params.id;     // WHICH ITEM
+  const { name, quantity } = req.body; // WHAT TO UPDATE
 
+  // validation
+  if (!name || quantity === "" || isNaN(quantity)) {
+    return res.status(400).json({ message: "Invalid input" });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE inventory_items
+       SET name = $1, quantity = $2
+       WHERE id = $3 AND user_id = $4
+       RETURNING id, name, quantity`,
+      [name, Number(quantity), itemId, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "Item not found or not authorized",
+      });
+    }
+
+    res.json({
+      message: "Item updated",
+      item: result.rows[0],
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Could not update item" });
+  }
+});
 
 
 

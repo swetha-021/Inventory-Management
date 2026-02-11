@@ -1,99 +1,185 @@
-import React, { useEffect, useState } from 'react'
-import axios from 'axios'
-
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 const Inventory = () => {
+  const [items, setItems] = useState([]);
+  const [error, setError] = useState("");
 
-    const [error,setError] = useState("");
-    const [items,setItems]= useState([]);
-    const [itemName,setItemName] = useState("");
-    const [quantity,setQuantity] = useState("");
+  // add item form
+  const [itemName, setItemName] = useState("");
+  const [quantity, setQuantity] = useState("");
 
-    useEffect(()=>{
-        const fetchInventory=async()=>{
-            const token = localStorage.getItem("token");
-            if(!token){
-                setError("Not logged in");
-                return;
-            }
+  // edit mode state
+  const [editingId, setEditingId] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editQuantity, setEditQuantity] = useState("");
 
-            try{
-                const response = await axios.get("http://localhost:5000/inventory",{
-                    headers:{Authorization: `Bearer ${token}`}
-                })
+  // ---------------- FETCH INVENTORY ----------------
+  useEffect(() => {
+    const fetchInventory = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setError("Not logged in");
+        return;
+      }
 
-                setItems(response.data.items);
-            }catch(err){
-                setError("Failed to load inventory");
-            }
-        }
+      try {
+        const response = await axios.get("http://localhost:5000/inventory", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setItems(response.data.items);
+      } catch {
+        setError("Failed to load inventory");
+      }
+    };
 
-        fetchInventory();
+    fetchInventory();
+  }, []);
 
-    },[]);
+  // ---------------- ADD ITEM ----------------
+  const addInventory = async (e) => {
+    e.preventDefault();
+    setError("");
 
-
-    const addInventory = async(e) =>{
-        e.preventDefault();
-        const token = localStorage.getItem("token");
-        try{
-            await axios.post("http://localhost:5000/inventory",
-                {name:itemName,quantity},
-                {headers:{Authorization:`Bearer ${token}`},}
-            );
-
-            setItemName("");
-            setQuantity("");
-
-            const response = await axios.get("http://localhost:5000/inventory",
-            {headers:{Authorization:`Bearer ${token}`}}
-            )
-
-            setItems(response.data.items);
-
-        }catch(err){
-            setError("could not add item");
-        }
+    if (!itemName || quantity === "") {
+      setError("Name and quantity required");
+      return;
     }
 
+    const token = localStorage.getItem("token");
 
-    return (
+    try {
+      const response = await axios.post(
+        "http://localhost:5000/inventory",
+        { name: itemName, quantity: Number(quantity) },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setItems([...items, response.data.item]);
+      setItemName("");
+      setQuantity("");
+    } catch {
+      setError("Could not add item");
+    }
+  };
+
+  // ---------------- DELETE ITEM ----------------
+  const deleteItem = async (itemId) => {
+    const token = localStorage.getItem("token");
+
+    try {
+      await axios.delete(`http://localhost:5000/inventory/${itemId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      setItems(items.filter((item) => item.id !== itemId));
+    } catch {
+      setError("Unable to delete item");
+    }
+  };
+
+  // ---------------- EDIT MODE ----------------
+  const startEdit = (item) => {
+    setEditingId(item.id);
+    setEditName(item.name);
+    setEditQuantity(item.quantity);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditName("");
+    setEditQuantity("");
+  };
+
+  // ---------------- UPDATE ITEM ----------------
+  const updateItem = async (itemId) => {
+    const token = localStorage.getItem("token");
+
+    if (!editName || editQuantity === "" || isNaN(editQuantity)) {
+      setError("Invalid input");
+      return;
+    }
+
+    try {
+      await axios.put(
+        `http://localhost:5000/inventory/${itemId}`,
+        { name: editName, quantity: Number(editQuantity) },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setItems(
+        items.map((item) =>
+          item.id === itemId
+            ? { ...item, name: editName, quantity: Number(editQuantity) }
+            : item
+        )
+      );
+
+      cancelEdit();
+    } catch {
+      setError("Failed to update item");
+    }
+  };
+
+  // ---------------- UI ----------------
+  return (
     <>
-        <h3>Inventory Page</h3>
-        {error && <p style={{color:"red"}}>{error}</p>}
-        
-        <form action="" onSubmit={addInventory}>
-            <label htmlFor="itemName">Item Name</label>
-            <input 
-                type="text" 
-                name= "itemName"
-                value= {itemName}
-                onChange={(e)=> setItemName(e.target.value)}
-                placeholder='Enter Item Name here'
-            />
+      <h3>Inventory Page</h3>
+      {error && <p style={{ color: "red" }}>{error}</p>}
 
-            <label htmlFor="quantity">Quantity</label>
-            <input 
-                type="text" 
-                name= "quantity"
-                value= {quantity}
-                onChange={(e)=> setQuantity(e.target.value)}
-                placeholder='Enter Quantity here'
-            />
+      {/* ADD ITEM FORM */}
+      <form onSubmit={addInventory}>
+        <input
+          type="text"
+          placeholder="Item name"
+          value={itemName}
+          onChange={(e) => setItemName(e.target.value)}
+        />
 
-            <button type='submit'>Submit</button>
-        </form> 
+        <input
+          type="number"
+          placeholder="Quantity"
+          value={quantity}
+          onChange={(e) => setQuantity(e.target.value)}
+        />
 
-        <ul>
-            {items.map(item =>(
-                <li key={item.id}>
-                    {item.name} -- {item.quantity}
-                </li>
-            ))}
-        </ul>
+        <button type="submit">Add</button>
+      </form>
+
+      {/* INVENTORY LIST */}
+      <ul>
+        {items.map((item) => (
+          <li key={item.id}>
+            {editingId === item.id ? (
+              <>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                />
+
+                <input
+                  type="number"
+                  value={editQuantity}
+                  onChange={(e) => setEditQuantity(e.target.value)}
+                  style={{ width: "60px", marginLeft: "8px" }}
+                />
+
+                <button onClick={() => updateItem(item.id)}>Update</button>
+                <button onClick={cancelEdit}>Cancel</button>
+              </>
+            ) : (
+              <>
+                {item.name} — {item.quantity}
+                <button onClick={() => startEdit(item)}>Edit</button>
+                <button onClick={() => deleteItem(item.id)}>Delete</button>
+              </>
+            )}
+          </li>
+        ))}
+      </ul>
     </>
-    
-  )
-}
+  );
+};
 
-export default Inventory
+export default Inventory;
