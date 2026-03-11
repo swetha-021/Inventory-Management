@@ -1,0 +1,24 @@
+version: "3"
+
+services:
+  backend:
+    build: .
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+    environment:
+      DB_HOST: postgres
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: inventory_app
+
+  postgres:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: inventory_app
+    ports:
+      - "5432:5432"

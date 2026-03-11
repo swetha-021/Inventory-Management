@@ -242,7 +242,7 @@ app.get("/protected", async(req,res)=>{
 
     const token = authHeader.split(" ")[1];
     console.log("TOKEN RECEIVED:", token);
-
+    
     try{
         const decode = jwt.verify(token,JWT_SECRET);
         res.json({msg:"authorised login",user: decode})
