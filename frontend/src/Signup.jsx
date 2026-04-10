@@ -1,7 +1,9 @@
 import React, { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import axios from 'axios';
+import Login from './Login';
 
 const Signup = () => {
 
@@ -35,6 +37,8 @@ const Signup = () => {
 
   return (
     <>
+    <div className="page">
+    <div className="login-card">
         <h3>SIGNUP PAGE</h3>
         <form onSubmit={handleSubmit} action="">
             <label htmlFor="email">Email:</label>
@@ -60,7 +64,11 @@ const Signup = () => {
             
 
             <button type='submit'> Signup</button>
+            <p>Already have an account? <Link to="/">Login</Link></p>
         </form>
+
+    </div>
+    </div>
     </>
   )
 }

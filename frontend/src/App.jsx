@@ -6,7 +6,8 @@ import Landing from './Landing'
 import Signup from './Signup'
 import Inventory from './Inventory'
 import ProtectedRoute from './ProtectedRoute'
-
+import Account from './Account'
+import Navbar from './Navbar'
 
 
 function App() {
@@ -14,12 +15,18 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path='/' element = {<Login />} />
-        <Route path = "/home" element={<Landing />}/>
-        <Route path='/Signup' element={<Signup/>}/>
-        <Route path='/inventory' element={<ProtectedRoute><Inventory/></ProtectedRoute>}/>
-      </Routes>   
+    <div className="app">
+      <Navbar />
+      <div className="content">
+        <Routes>
+          <Route path='/' element = {<Login />} />
+          <Route path = "/home" element={<Landing />}/>
+          <Route path='/Signup' element={<Signup/>}/>
+          <Route path='/inventory' element={<ProtectedRoute><Inventory/></ProtectedRoute>}/>
+          <Route path='/account' element={<ProtectedRoute><Account/></ProtectedRoute>}/>
+        </Routes>
+      </div>   
+    </div>
     </BrowserRouter>
   )
 }

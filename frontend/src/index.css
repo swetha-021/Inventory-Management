@@ -1,0 +1,243 @@
+body {
+  margin: 0;
+  background-color: #000;
+  color: #fff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.content {
+  flex: 1;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* container layout for login and signup */
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  width: 100%;
+  max-width: 700px;
+  background: #0f0f0f;
+  border: 1px solid #1f1f1f;
+  border-radius: 12px;
+  padding: 30px;
+}
+
+.page {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.login-card {
+  background: #0f0f0f;
+  padding: 40px;
+  border-radius: 12px;
+  border: 1px solid #1f1f1f;
+  width: 320px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+input {
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #333;
+  background: #111;
+  color: white;
+}
+
+button{
+    margin: auto;
+    width: 100px;
+}
+
+/*nav bar css*/
+
+.navbar {
+  height: 60px;
+  background: #0f0f0f;
+  border-bottom: 1px solid #1f1f1f;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 20px;
+}
+
+.nav-left {
+  color: #D1EEFE;
+  cursor: pointer;
+}
+
+.navitem{
+  cursor: pointer;
+}
+
+.nav-right {
+  position: relative;
+  cursor: pointer;
+}
+
+
+.dropdown {
+  position: absolute;
+  right: 0;
+  top: 35px;
+
+  background: #111;
+  border: 1px solid #333;
+  border-radius: 6px;
+
+  width: 150px;
+}
+
+.dropdown p {
+  margin: 0;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.dropdown p:hover {
+  background: #1f1f1f;
+}
+
+.settings {
+  position: relative;
+  cursor: pointer;
+}
+
+.home {
+  cursor: pointer;
+}
+/* accounts page */
+
+.pfp {
+  display: flex;
+  justify-content: center;
+  margin: 30px 0;
+}
+
+.pfp-wrapper {
+  position: relative;
+  cursor: pointer;
+}
+
+.profile-img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid #D1EEFE;
+}
+
+.profile-icon {
+  cursor: pointer;
+}
+
+/* overlay */
+
+.pfp-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  width: 120px;
+  height: 120px;
+
+  border-radius: 50%;
+
+  background: rgba(0,0,0,0.6);
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  color: white;
+
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+
+.pfp-wrapper:hover .pfp-overlay {
+  opacity: 1;
+}
+
+/* inventory page */
+.inventory-page {
+  min-height: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 30px;
+}
+
+.inventory-card {
+  width: 100%;
+  max-width: 700px;
+  background: #0f0f0f;
+  border: 1px solid #1f1f1f;
+  border-radius: 12px;
+  padding: 30px;
+}
+
+.inventory-card h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.inventory-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 30px;
+}
+
+.inventory-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.inventory-item {
+  background: #111;
+  border: 1px solid #222;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 12px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+}
+
+.item-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.logout-btn {
+  display: block;
+  margin: 20px auto 0;
+}

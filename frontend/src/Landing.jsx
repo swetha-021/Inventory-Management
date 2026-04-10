@@ -19,9 +19,12 @@ import {useState,useEffect} from "react"
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import Login from './Login'
+import Navbar from './Navbar'
 
 
 const Landing = () => {
+
+
 
   const navigate = useNavigate();
 
@@ -67,7 +70,9 @@ const Landing = () => {
 
 
   return (
+    
     <div>
+
       <p>Hello World</p>
       <p>Welcome to the landing page</p>
 
@@ -80,7 +85,7 @@ const Landing = () => {
         </div>
       )}
 
-      <button onClick={handleSubmit}>Logout</button>
+      {/* <button onClick={handleSubmit}>Logout</button> */}
     </div>
 
   )
