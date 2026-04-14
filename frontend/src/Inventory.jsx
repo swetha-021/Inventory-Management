@@ -240,7 +240,7 @@ const Inventory = () => {
             ) : (
               <>
                 <span>
-                  {item.name} - {item.quantity}
+                  {item.name} - {item.quantity} - {item.category}
                 </span>
 
                 <div className="item-buttons">

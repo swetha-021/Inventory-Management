@@ -30,8 +30,15 @@
 
 ///////////////////////////////////////////////////////////
 
-import dotenv from "dotenv";
-dotenv.config();
+
+require("dotenv").config();
+
+const OpenAI = require("openai");
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
 
 const cors = require("cors");
 const express = require("express");
@@ -85,35 +92,89 @@ const authenticateToken = (req,res,next) =>{
     }
 }
 
-app.post("/inventory",authenticateToken,async (req,res)=>{
-    const {name,quantity} = req.body;
-    const userId = req.user.id;
+// app.post("/inventory",authenticateToken,async (req,res)=>{
+//     const {name,quantity} = req.body;
+//     const userId = req.user.id;
 
-    if (!name || quantity === undefined) {
-        return res.status(400).json({ message: "Name and quantity required" });
-    }
-    try{
-        const result = await pool.query(
-            `INSERT INTO inventory_items (user_id,name,quantity)
-            values ($1, $2, $3)
-            RETURNING id, name, quantity`,
-            [userId,name,quantity]
-        )
+//     if (!name || quantity === undefined) {
+//         return res.status(400).json({ message: "Name and quantity required" });
+//     }
+//     try{
+//         const result = await pool.query(
+//             `INSERT INTO inventory_items (user_id,name,quantity)
+//             values ($1, $2, $3)
+//             RETURNING id, name, quantity`,
+//             [userId,name,quantity]
+//         )
 
-        res.status(201).json({message: "Item added",item: result.rows[0],});
-    }catch(err){
-        console.error(err);
-        res.status(500).json({ message: "Server error" });
+//         res.status(201).json({message: "Item added",item: result.rows[0],});
+//     }catch(err){
+//         console.error(err);
+//         res.status(500).json({ message: "Server error" });
+//     }
+// })
+
+app.post("/inventory", authenticateToken, async (req, res) => {
+  const { name, quantity } = req.body;
+  const userId = req.user.id;
+
+  if (!name || quantity === undefined) {
+    return res.status(400).json({ message: "Name and quantity required" });
+  }
+
+  let category = "Other";
+
+  try {
+    try {
+      const categoryResponse = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "user",
+            content: `
+            Classify this inventory item into one category only.
+
+            Item: ${name}
+
+            Possible categories:
+            Electronics, Furniture, Office Supplies, Grocery, Clothing
+
+            Return only the category name.
+            `,
+          },
+        ],
+      });
+
+      category = categoryResponse.choices[0].message.content.trim();
+    } catch (openaiError) {
+      console.log("OpenAI failed, using default category");
     }
-})
+
+    const result = await pool.query(
+      `INSERT INTO inventory_items (user_id, name, quantity, category)
+       VALUES ($1, $2, $3, $4)
+       RETURNING id, name, quantity, category`,
+      [userId, name, quantity, category]
+    );
+
+    res.status(201).json({
+      message: "Item added",
+      item: result.rows[0],
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 app.get("/inventory",authenticateToken, async(req,res)=>{
     const id = req.user.id;
         try{
             const result = await pool.query(
-                `SELECT  id, name, quantity, created_at
-                 from inventory_items WHERE user_id = $1
-                 ORDER BY created_at DESC`,
+                `SELECT id, name, quantity, category, created_at
+                FROM inventory_items
+                WHERE user_id = $1
+                ORDER BY created_at DESC`,
                 [id]
             );
             res.status(200).json({msg:"items listed", items:result.rows})
