@@ -252,10 +252,10 @@ const Inventory = () => {
           </li>
         ))}
       </ul>
-
+{/* 
       <button onClick={logout} className="logout-btn">
         Logout
-      </button>
+      </button> */}
     </div>
   </div>
 );

@@ -30,7 +30,8 @@
 
 ///////////////////////////////////////////////////////////
 
-
+import dotenv from "dotenv";
+dotenv.config();
 
 const cors = require("cors");
 const express = require("express");
