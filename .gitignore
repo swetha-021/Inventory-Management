@@ -1,2 +1,14 @@
 .env
 backend/.env
+backend/node_modules/
+backend/target/
+backend/.idea/
+*.iml
+.idea/
+*.class
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env*.local
+.DS_Store
+*.log

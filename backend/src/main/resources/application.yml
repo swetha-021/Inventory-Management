@@ -1,0 +1,31 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: inventory-management
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/inventory}
+    username: ${DATABASE_USERNAME:inventory}
+    password: ${DATABASE_PASSWORD:inventory}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-me-to-a-long-random-secret-key-of-at-least-32-bytes}
+    expiration-ms: ${JWT_EXPIRATION_MS:28800000}
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
+
+logging:
+  level:
+    org.springframework.security: INFO
