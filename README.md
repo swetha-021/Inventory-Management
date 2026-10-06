@@ -1,66 +1,83 @@
 # Inventory Management
 
-Role-based inventory system rebuilt as a portfolio project aligned with ID.me’s stack: **Java 17, Spring Boot, Spring Security (JWT + `@PreAuthorize`), PostgreSQL, Next.js, TypeScript, and Tailwind**.
+A role-based inventory system built with Java 17, Spring Boot, Spring Security, PostgreSQL, and Next.js.
 
-The previous Express/Vite app was a personal CRUD tool. This rewrite is a multi-role inventory system: users and roles, products, categories, suppliers, a stock movement ledger, audit logs, and backend-enforced permissions.
+Staff, Managers, and Admins each get different permissions, enforced on the backend. Every stock change is recorded in a movement ledger, and admin-level actions are written to an audit log.
+
+---
 
 ## Features
 
-- JWT login and register (register always creates **Staff**)
-- Roles: **Staff**, **Manager**, **Admin**, enforced on the API with `@PreAuthorize`
-- Product CRUD with search, category/supplier filters, and pagination
-- `POST /stock/in` and `POST /stock/out` update quantity and write a movement in the same transaction
-- Stock-out is rejected when quantity would go negative
-- Low-stock report (Manager+)
-- Audit logs (Admin only)
-- Next.js UI that shows or hides actions by role (the API still returns 403 if you call a forbidden endpoint)
+- JWT-based login and registration (new accounts are always created as Staff)
+- Three roles (Staff, Manager, Admin), enforced on the API with `@PreAuthorize`
+- Product management with search, category and supplier filters, and pagination
+- Stock in/out endpoints that update quantity and record a movement in the same transaction
+- Low-stock report for Managers and Admins
+- Audit log for Admins
+- A Next.js UI that shows or hides actions based on role
 
-## Permission matrix
+## Permissions
 
 | Action | Staff | Manager | Admin |
-|---|---|---|---|
-| View products, record stock in/out | Yes | Yes | Yes |
-| Manage products, suppliers, categories | No | Yes | Yes |
-| Low-stock report | No | Yes | Yes |
-| Manage users/roles, view audit logs | No | No | Yes |
+|---|:---:|:---:|:---:|
+| View products, record stock in/out | ✓ | ✓ | ✓ |
+| Manage products, suppliers, categories | | ✓ | ✓ |
+| View low-stock report | | ✓ | ✓ |
+| Manage users and roles, view audit logs | | | ✓ |
 
-## Tech
+## Design decisions
 
-- Backend: Spring Boot 3.4, Java 17, Spring Security, Spring Data JPA, Flyway, JUnit 5, Mockito
-- Database: PostgreSQL 16 (H2 for tests and a local `dev` profile)
-- Frontend: Next.js 15, TypeScript, Tailwind CSS
-- DevOps: Docker Compose, GitHub Actions CI
+- **Permissions are enforced on the backend, not just the UI.** The frontend hides actions a user can't take, but the API still returns `403` if a forbidden endpoint is called directly.
+- **Quantity can only change through stock movements.** Product updates can't edit quantity, so the ledger always explains the current stock level.
+- **Stock updates are transactional.** The quantity change and its movement record are saved together, and a stock-out that would make quantity negative is rejected.
+- **Self-registration is limited to Staff.** Only an Admin can grant higher roles.
+- **No hardcoded secrets.** The JWT secret and database credentials come from environment variables.
 
-## Quick start
+## Tech stack
 
-### Option A — in-memory database (no Docker)
+| Layer | Tools |
+|---|---|
+| Backend | Java 17, Spring Boot 3.4, Spring Security, Spring Data JPA, Flyway |
+| Database | PostgreSQL 16 (H2 for tests and the local dev profile) |
+| Frontend | Next.js 15, TypeScript, Tailwind CSS |
+| Testing | JUnit 5, Mockito |
+| DevOps | Docker Compose, GitHub Actions |
+
+## Getting started
+
+### Option A: In-memory database (no Docker needed)
 
 ```bash
-# terminal 1
+# Terminal 1
 cd backend
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 
-# terminal 2
+# Terminal 2
 cd frontend
 npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
-
-### Option B — PostgreSQL with Docker Compose
+### Option B: PostgreSQL with Docker Compose
 
 ```bash
 docker compose up postgres
+
+# In a new terminal
 cd backend
 ./mvnw spring-boot:run
-cd ../frontend
+
+# In another terminal
+cd frontend
+npm install
 npm run dev
 ```
 
-The API listens on `http://localhost:8080`. Set `NEXT_PUBLIC_API_URL` in `frontend/.env.local` if you change that.
+The frontend runs at http://localhost:3000 and the API at http://localhost:8080. If you change the API port, set `NEXT_PUBLIC_API_URL` in `frontend/.env.local`.
 
-### Demo accounts (seeded on first run)
+### Demo accounts
+
+These are seeded on first run for local testing only.
 
 | Role | Email | Password |
 |---|---|---|
@@ -68,22 +85,21 @@ The API listens on `http://localhost:8080`. Set `NEXT_PUBLIC_API_URL` in `fronte
 | Manager | manager@inventory.local | Manager123! |
 | Staff | staff@inventory.local | Staff123! |
 
-## API
+## API overview
 
 | Method | Path | Access |
 |---|---|---|
 | POST | `/auth/register` | Public (creates Staff) |
 | POST | `/auth/login` | Public |
 | GET | `/auth/me` | Authenticated |
-| GET/POST/PUT/DELETE | `/products` | GET: Staff+ · write: Manager+ |
-| POST | `/stock/in`, `/stock/out` | Staff+ |
-| GET | `/stock/movements` | Staff+ |
-| GET | `/reports/low-stock` | Manager+ |
+| GET | `/products` | Staff and above |
+| POST / PUT / DELETE | `/products` | Manager and above |
+| GET / POST / PUT / DELETE | `/suppliers` | Manager and above |
+| POST | `/stock/in`, `/stock/out` | Staff and above |
+| GET | `/stock/movements` | Staff and above |
+| GET | `/reports/low-stock` | Manager and above |
 | GET | `/audit-logs` | Admin |
-| GET/PUT/PATCH | `/users` | Admin |
-| GET/POST/PUT/DELETE | `/suppliers` | Manager+ |
-
-Quantity is **not** editable on product update. Stock changes go through the movement endpoints so the ledger stays accurate.
+| GET / PUT / PATCH | `/users` | Admin |
 
 ## Tests
 
@@ -92,32 +108,22 @@ cd backend
 ./mvnw test
 ```
 
-Permission tests include:
+The tests focus on access control and stock rules, including:
 
 - Staff cannot create, update, or delete products (`403`)
 - Staff cannot view audit logs or the low-stock report
-- Manager can view low-stock; Admin can view audit logs
-- Stock-out with insufficient quantity is rejected
+- Managers can view the low-stock report, and Admins can view audit logs
+- A stock-out with insufficient quantity is rejected
 
-CI runs backend tests and a frontend production build on every push (`.github/workflows/ci.yml`).
+GitHub Actions runs the backend tests and a frontend production build on every push. See `.github/workflows/ci.yml`.
 
-## Screenshots
+## Development notes
 
-See [`docs/screenshots`](docs/screenshots) after running the app:
+Cursor was a helpful assistant along the way, mainly for scaffolding boilerplate, drafting test cases, and speeding up the frontend setup. I reviewed and tested its suggestions, especially around authorization rules and transactional stock updates.
 
-- Login
-- Dashboard (low-stock cards for Manager/Admin)
-- Product list
-- Stock in/out
-- Admin users and audit logs
+## What I'd like to improve next
 
-## Built with Cursor
-
-This project was rebuilt with **Cursor**. I used it to:
-
-- Evaluate whether a Spring Boot rewrite of the old Express app was feasible
-- Scaffold the Spring Boot module, Flyway schema, JWT security, and `@PreAuthorize` rules
-- Generate permission-focused JUnit tests (Staff cannot delete products)
-- Build the Next.js + Tailwind UI and GitHub Actions workflow
-
-I reviewed generated code for auth rules, transactional stock updates, and secret handling (JWT and DB credentials come from environment variables, not hardcoded files).
+- Refresh tokens and token revocation
+- Rate limiting on the auth endpoints
+- Purchase orders that create stock-in movements automatically
+- A hosted demo
